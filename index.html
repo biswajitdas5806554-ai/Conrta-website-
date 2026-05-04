@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biswajit Das — Web Developer & Designer</title>
+<meta name="description" content="Web developer and designer crafting modern, performant websites with immersive 3D experiences.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Geist+Mono:wght@100..900&family=Geist:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0a;
+    --bg-soft: #141414;
+    --text: #f5f5f0;
+    --text-dim: #6b6b66;
+    --accent: #c8ff00;
+    --border: rgba(245, 245, 240, 0.08);
+    --grid-line: rgba(245, 245, 240, 0.04);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+    overflow-x: hidden;
+    cursor: none;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 80px 80px;
+  }
+
+  ::selection { background: var(--accent); color: var(--bg); }
+
+  /* ============ Custom Cursor ============ */
+  .cursor {
+    position: fixed;
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.15s ease, width 0.2s, height 0.2s;
+    transform: translate(-50%, -50%);
+    mix-blend-mode: difference;
+  }
+  .cursor.hover { width: 40px; height: 40px; background: transparent; border: 1px solid var(--accent); }
+
+  @media (max-width: 768px) {
+    body { cursor: auto; }
+    .cursor { display: none; }
+  }
+
+  /* ============ Loader ============ */
+  .loader {
+    position: fixed; inset: 0; background: var(--bg);
+    z-index: 10000; display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.6s, visibility 0.6s;
+  }
+  .loader.hidden { opacity: 0; visibility: hidden; }
+  .loader-text {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px; letter-spacing: 0.2em; color: var(--text-dim);
+    text-transform: uppercase;
+  }
+  .loader-text span { color: var(--accent); }
+
+  /* ============ Navigation ============ */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    padding: 24px 40px;
+    display: flex; justify-content: space-between; align-items: center;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+    background: rgba(10,10,10,0.6);
+    border-bottom: 1px solid var(--border);
+  }
+  .brand {
+    font-family: 'Fraunces', serif;
+    font-size: 18px; font-weight: 500; letter-spacing: -0.02em;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .brand .mark {
+    width: 8px; height: 8px; background: var(--accent); border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .nav-links {
+    display: flex; gap: 4px; list-style: none;
+    background: var(--bg-soft); padding: 6px;
+    border-radius: 100px; border: 1px solid var(--border);
+  }
+  .nav-links a {
+    padding: 8px 18px; color: var(--text-dim);
+    text-decoration: none; font-size: 13px; font-weight: 500;
+    border-radius: 100px; transition: all 0.3s;
+    font-family: 'Geist Mono', monospace; letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-links a.active { background: var(--accent); color: var(--bg); }
+
+  .nav-meta {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px; color: var(--text-dim); letter-spacing: 0.1em;
+    display: flex; align-items: center; gap: 8px; text-transform: uppercase;
+  }
+  .nav-meta .dot {
+    width: 6px; height: 6px; background: var(--accent); border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  @media (max-width: 768px) {
+    nav { padding: 16px 20px; }
+    .nav-meta { display: none; }
+    .nav-links a { padding: 6px 12px; font-size: 11px; }
+  }
+
+  /* ============ Page System ============ */
+  main { position: relative; }
+  .page {
+    position: fixed; inset: 0;
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity 0.5s ease;
+  }
+  .page.active { opacity: 1; visibility: visible; pointer-events: auto; }
+
+  .scene {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%; z-index: 1;
+  }
+
+  .content {
+    position: relative; z-index: 2;
+    height: 100vh; padding: 100px 40px 40px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    pointer-events: none;
+  }
+  .content > * { pointer-events: auto; }
+
+  /* ============ HOME PAGE ============ */
+  .meta-row {
+    display: flex; justify-content: space-between;
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px; color: var(--text-dim);
+    letter-spacing: 0.15em; text-transform: uppercase;
+  }
+
+  .hero {
+    text-align: center; max-width: 1100px; margin: 0 auto;
+  }
+  .hero-eyebrow {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px; color: var(--accent); letter-spacing: 0.25em;
+    text-transform: uppercase; margin-bottom: 24px;
+  }
+  .hero-title {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(48px, 10vw, 140px);
+    line-height: 0.95; font-weight: 300;
+    letter-spacing: -0.04em;
+  }
+  .hero-title .italic { font-style: italic; color: var(--accent); }
+  .hero-title span { display: inline-block; opacity: 0; transform: translateY(40px); animation: rise 0.8s forwards; }
+  .hero-title span:nth-child(1) { animation-delay: 0.2s; }
+  .hero-title span:nth-child(2) { animation-delay: 0.35s; }
+  .hero-title span:nth-child(3) { animation-delay: 0.5s; }
+  .hero-title span:nth-child(4) { animation-delay: 0.65s; }
+  @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+
+  .hero-desc {
+    margin-top: 32px; max-width: 540px; margin-left: auto; margin-right: auto;
+    font-size: 15px; color: var(--text-dim); line-height: 1.7;
+    opacity: 0; animation: rise 0.8s 0.9s forwards;
+  }
+
+  .scroll-hint {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px; color: var(--text-dim);
+    letter-spacing: 0.15em; text-transform: uppercase;
+  }
+  .scroll-hint::before {
+    content: ''; width: 24px; height: 1px; background: var(--text-dim);
+    animation: extend 2s infinite;
+  }
+  @keyframes extend { 0%,100% { width: 24px; } 50% { width: 48px; background: var(--accent); } }
+
+  /* ============ ABOUT PAGE ============ */
+  .about-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 80px;
+    height: 100%; align-items: center; max-width: 1400px; margin: 0 auto;
+  }
+  .about-label {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px; color: var(--accent); letter-spacing: 0.25em;
+    text-transform: uppercase; margin-bottom: 24px;
+  }
+  .about h2 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 300; line-height: 1.05; letter-spacing: -0.03em;
+    margin-bottom: 32px;
+  }
+  .about h2 em { color: var(--accent); font-style: italic; }
+  .about p {
+    color: var(--text-dim); font-size: 15px; line-height: 1.8;
+    margin-bottom: 16px; max-width: 480px;
+  }
+  .skills {
+    margin-top: 40px; display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .skill-tag {
+    padding: 8px 16px; border: 1px solid var(--border);
+    border-radius: 100px; font-size: 12px;
+    font-family: 'Geist Mono', monospace; letter-spacing: 0.05em;
+    transition: all 0.3s;
+  }
+  .skill-tag:hover { border-color: var(--accent); color: var(--accent); }
+
+  @media (max-width: 768px) {
+    .about-grid { grid-template-columns: 1fr; gap: 40px; }
+  }
+
+  /* ============ SERVICES PAGE ============ */
+  .services-wrap {
+    max-width: 1400px; margin: 0 auto; height: 100%;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .services-head {
+    margin-bottom: 60px; display: flex; justify-content: space-between; align-items: end;
+  }
+  .services-head h2 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 300; line-height: 1; letter-spacing: -0.03em;
+  }
+  .services-head h2 em { color: var(--accent); font-style: italic; }
+  .services-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+  }
+  .service-card {
+    border: 1px solid var(--border); padding: 28px;
+    border-radius: 12px; background: rgba(20,20,20,0.4);
+    backdrop-filter: blur(8px);
+    transition: all 0.4s; min-height: 260px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: relative; overflow: hidden;
+  }
+  .service-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent 60%, rgba(200,255,0,0.05));
+    opacity: 0; transition: opacity 0.4s;
+  }
+  .service-card:hover { border-color: var(--accent); transform: translateY(-4px); }
+  .service-card:hover::before { opacity: 1; }
+  .service-num {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px; color: var(--accent); letter-spacing: 0.2em;
+  }
+  .service-card h3 {
+    font-family: 'Fraunces', serif; font-size: 22px;
+    font-weight: 400; line-height: 1.2; margin-top: 12px;
+  }
+  .service-card p {
+    color: var(--text-dim); font-size: 13px;
+    line-height: 1.6; margin-top: 12px;
+  }
+
+  @media (max-width: 1024px) { .services-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) {
+    .services-grid { grid-template-columns: 1fr; }
+    .services-head { flex-direction: column; align-items: flex-start; gap: 20px; }
+  }
+
+  /* ============ WORK PAGE ============ */
+  .work-wrap {
+    max-width: 1400px; margin: 0 auto; height: 100%;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .work-head { margin-bottom: 50px; }
+  .work-head h2 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 300; line-height: 1; letter-spacing: -0.03em;
+  }
+  .work-head h2 em { color: var(--accent); font-style: italic; }
+  .projects {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+  }
+  .project {
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 24px; background: rgba(20,20,20,0.4);
+    backdrop-filter: blur(8px);
+    cursor: pointer; transition: all 0.4s;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .project:hover { border-color: var(--accent); transform: translateY(-4px); }
+  .project-img {
+    aspect-ratio: 16/10; background: var(--bg-soft);
+    border-radius: 8px; overflow: hidden; position: relative;
+    border: 1px solid var(--border);
+  }
+  .project-img::after {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(200,255,0,0.15), transparent 40%),
+      linear-gradient(135deg, #1a1a1a, #2a2a2a);
+  }
+  .project-img.alt::after {
+    background:
+      radial-gradient(circle at 70% 60%, rgba(200,255,0,0.2), transparent 50%),
+      linear-gradient(135deg, #2a2a2a, #1a1a1a);
+  }
+  .project-img.alt2::after {
+    background:
+      radial-gradient(circle at 50% 50%, rgba(200,255,0,0.1), transparent 60%),
+      linear-gradient(45deg, #1f1f1f, #1a1a1a);
+  }
+  .project-meta {
+    display: flex; justify-content: space-between;
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px; color: var(--text-dim);
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .project h3 {
+    font-family: 'Fraunces', serif; font-size: 22px;
+    font-weight: 400; line-height: 1.2;
+  }
+  .project p {
+    color: var(--text-dim); font-size: 13px; line-height: 1.6;
+  }
+
+  @media (max-width: 1024px) { .projects { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) { .projects { grid-template-columns: 1fr; } }
+
+  /* ============ CONTACT PAGE ============ */
+  .contact-wrap {
+    max-width: 1100px; margin: 0 auto; height: 100%;
+    display: flex; flex-direction: column; justify-content: center;
+    text-align: center;
+  }
+  .contact-eyebrow {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px; color: var(--accent); letter-spacing: 0.25em;
+    text-transform: uppercase; margin-bottom: 24px;
+  }
+  .contact h2 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(48px, 8vw, 120px);
+    font-weight: 300; line-height: 0.95; letter-spacing: -0.04em;
+  }
+  .contact h2 em { color: var(--accent); font-style: italic; }
+  .contact-email {
+    margin-top: 40px; display: inline-block;
+    font-family: 'Fraunces', serif; font-size: clamp(20px, 3vw, 32px);
+    color: var(--text); text-decoration: none; padding: 16px 32px;
+    border: 1px solid var(--border); border-radius: 100px;
+    transition: all 0.4s; font-style: italic;
+  }
+  .contact-email:hover { border-color: var(--accent); color: var(--accent); }
+
+  .contact-grid {
+    margin-top: 60px; display: grid;
+    grid-template-columns: repeat(3, 1fr); gap: 40px;
+    border-top: 1px solid var(--border); padding-top: 40px;
+  }
+  .contact-block {
+    text-align: left;
+  }
+  .contact-block .label {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px; color: var(--text-dim);
+    letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .contact-block .value {
+    font-family: 'Fraunces', serif; font-size: 18px;
+  }
+  .contact-block a { color: var(--text); text-decoration: none; transition: color 0.3s; }
+  .contact-block a:hover { color: var(--accent); }
+
+  @media (max-width: 768px) {
+    .contact-grid { grid-template-columns: 1fr; gap: 24px; }
+  }
+
+  /* ============ Footer Meta ============ */
+  .footer-meta {
+    display: flex; justify-content: space-between;
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px; color: var(--text-dim);
+    letter-spacing: 0.15em; text-transform: uppercase;
+  }
+  .footer-meta .accent { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+
+<div class="loader" id="loader">
+  <div class="loader-text">Loading<span>...</span></div>
+</div>
+
+<nav>
+  <div class="brand">
+    <span class="mark"></span>
+    Biswajit Das
+  </div>
+  <ul class="nav-links">
+    <li><a href="#home" class="active" data-page="home">Home</a></li>
+    <li><a href="#about" data-page="about">About</a></li>
+    <li><a href="#services" data-page="services">Services</a></li>
+    <li><a href="#work" data-page="work">Work</a></li>
+    <li><a href="#contact" data-page="contact">Contact</a></li>
+  </ul>
+  <div class="nav-meta">
+    <span class="dot"></span>
+    Available for work
+  </div>
+</nav>
+
+<main>
+  <!-- HOME -->
+  <section class="page active" id="home">
+    <canvas class="scene" data-scene="home"></canvas>
+    <div class="content">
+      <div class="meta-row">
+        <span>Portfolio / 2026</span>
+        <span>Index 01 — 05</span>
+      </div>
+      <div class="hero">
+        <div class="hero-eyebrow">Biswajit Das — Independent Studio</div>
+        <h1 class="hero-title">
+          <span>Web</span>
+          <span class="italic">developer</span>
+          <span>&amp;</span>
+          <span class="italic">designer.</span>
+        </h1>
+        <p class="hero-desc">I craft modern, performant websites with refined interactions and immersive 3D experiences. Building digital products that businesses remember.</p>
+      </div>
+      <div class="footer-meta">
+        <div class="scroll-hint">Scroll or navigate</div>
+        <span><span class="accent">●</span> &nbsp;Based in India / Remote</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="page" id="about">
+    <canvas class="scene" data-scene="about"></canvas>
+    <div class="content">
+      <div class="meta-row">
+        <span>About / 02</span>
+        <span>Studio of one</span>
+      </div>
+      <div class="about about-grid">
+        <div></div>
+        <div>
+          <div class="about-label">[ About ]</div>
+          <h2>I build the web with <em>care</em>, code, and a sense of craft.</h2>
+          <p>I'm a freelance web developer and designer focused on landing pages, marketing sites, and interactive 3D experiences. I work with founders and small teams who want their site to actually feel like their brand.</p>
+          <p>My approach: tight typography, thoughtful motion, and code that loads fast on any device. No bloated templates. No generic AI aesthetics.</p>
+          <div class="skills">
+            <span class="skill-tag">React</span>
+            <span class="skill-tag">Three.js</span>
+            <span class="skill-tag">Framer</span>
+            <span class="skill-tag">Webflow</span>
+            <span class="skill-tag">Tailwind CSS</span>
+            <span class="skill-tag">TypeScript</span>
+            <span class="skill-tag">Figma</span>
+            <span class="skill-tag">Vercel</span>
+          </div>
+        </div>
+      </div>
+      <div class="footer-meta">
+        <span>BD — 02 / 05</span>
+        <span class="accent">● &nbsp;Currently open to projects</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICES -->
+  <section class="page" id="services">
+    <canvas class="scene" data-scene="services"></canvas>
+    <div class="content">
+      <div class="meta-row">
+        <span>Services / 03</span>
+        <span>Pricing on request</span>
+      </div>
+      <div class="services-wrap">
+        <div class="services-head">
+          <h2>What I <em>build</em>.</h2>
+          <div style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:0.15em;text-transform:uppercase;">
+            04 Services
+          </div>
+        </div>
+        <div class="services-grid">
+          <div class="service-card">
+            <div>
+              <div class="service-num">01</div>
+              <h3>Landing Pages</h3>
+            </div>
+            <p>High-converting, single-page marketing sites built for SaaS, products, and launches.</p>
+          </div>
+          <div class="service-card">
+            <div>
+              <div class="service-num">02</div>
+              <h3>3D Websites</h3>
+            </div>
+            <p>Immersive interactive experiences powered by Three.js. WebGL animations and effects.</p>
+          </div>
+          <div class="service-card">
+            <div>
+              <div class="service-num">03</div>
+              <h3>Web Redesigns</h3>
+            </div>
+            <p>Modernizing tired websites into fast, accessible, conversion-focused experiences.</p>
+          </div>
+          <div class="service-card">
+            <div>
+              <div class="service-num">04</div>
+              <h3>Framer / Webflow</h3>
+            </div>
+            <p>No-code platform builds for clients who want autonomy after launch.</p>
+          </div>
+        </div>
+      </div>
+      <div class="footer-meta">
+        <span>BD — 03 / 05</span>
+        <span>Need something custom? Let's talk.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORK -->
+  <section class="page" id="work">
+    <canvas class="scene" data-scene="work"></canvas>
+    <div class="content">
+      <div class="meta-row">
+        <span>Selected Work / 04</span>
+        <span>2025 — 2026</span>
+      </div>
+      <div class="work-wrap">
+        <div class="work-head">
+          <h2>Recent <em>projects</em>.</h2>
+        </div>
+        <div class="projects">
+          <div class="project">
+            <div class="project-img"></div>
+            <div class="project-meta">
+              <span>SaaS / Concept</span>
+              <span>2026</span>
+            </div>
+            <h3>Flow — SaaS Landing Page</h3>
+            <p>A spec landing page for a fictional productivity SaaS. Focused on clarity, conversion, and motion design.</p>
+          </div>
+          <div class="project">
+            <div class="project-img alt"></div>
+            <div class="project-meta">
+              <span>3D / Personal</span>
+              <span>2026</span>
+            </div>
+            <h3>3D Portfolio Site</h3>
+            <p>This very site. A 5-page interactive portfolio built with vanilla JS, Three.js, and zero frameworks.</p>
+          </div>
+          <div class="project">
+            <div class="project-img alt2"></div>
+            <div class="project-meta">
+              <span>Tooling / Personal</span>
+              <span>2025</span>
+            </div>
+            <h3>Component Library</h3>
+            <p>Open-source React + Tailwind component kit. Buttons, cards, navigation, and more.</p>
+          </div>
+        </div>
+      </div>
+      <div class="footer-meta">
+        <span>BD — 04 / 05</span>
+        <span>More work available on request</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="page" id="contact">
+    <canvas class="scene" data-scene="contact"></canvas>
+    <div class="content">
+      <div class="meta-row">
+        <span>Contact / 05</span>
+        <span>Always reading email</span>
+      </div>
+      <div class="contact contact-wrap">
+        <div class="contact-eyebrow">[ Get in touch ]</div>
+        <h2>Let's build something <em>good</em>.</h2>
+        <a href="mailto:hello@biswajit.dev" class="contact-email">hello@biswajit.dev</a>
+        <div class="contact-grid">
+          <div class="contact-block">
+            <div class="label">Email</div>
+            <div class="value"><a href="mailto:hello@biswajit.dev">hello@biswajit.dev</a></div>
+          </div>
+          <div class="contact-block">
+            <div class="label">Contra</div>
+            <div class="value"><a href="https://contra.com" target="_blank">contra.com/biswajit</a></div>
+          </div>
+          <div class="contact-block">
+            <div class="label">Response time</div>
+            <div class="value">Within 24 hours</div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-meta">
+        <span>BD — 05 / 05</span>
+        <span class="accent">● &nbsp;End of index</span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ===========================================================
+   3D Portfolio — Biswajit Das
+   Vanilla JS + Three.js. No frameworks.
+   =========================================================== */
+
+// ---------- Loader ----------
+window.addEventListener('load', () => {
+  setTimeout(() => document.getElementById('loader').classList.add('hidden'), 600);
+});
+
+// ---------- Custom Cursor ----------
+const cursor = document.getElementById('cursor');
+let mx = window.innerWidth / 2, my = window.innerHeight / 2;
+let cx = mx, cy = my;
+
+document.addEventListener('mousemove', (e) => { mx = e.clientX; my = e.clientY; });
+function followCursor() {
+  cx += (mx - cx) * 0.2;
+  cy += (my - cy) * 0.2;
+  cursor.style.left = cx + 'px';
+  cursor.style.top = cy + 'px';
+  requestAnimationFrame(followCursor);
+}
+followCursor();
+
+document.querySelectorAll('a, button, .service-card, .project, .skill-tag').forEach(el => {
+  el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+  el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+});
+
+// ---------- Page Routing ----------
+const pages = document.querySelectorAll('.page');
+const navLinks = document.querySelectorAll('.nav-links a');
+
+function showPage(id) {
+  pages.forEach(p => p.classList.remove('active'));
+  navLinks.forEach(l => l.classList.remove('active'));
+  const page = document.getElementById(id);
+  const link = document.querySelector(`[data-page="${id}"]`);
+  if (page) page.classList.add('active');
+  if (link) link.classList.add('active');
+  activeScene = id;
+}
+
+navLinks.forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    const id = link.dataset.page;
+    history.pushState(null, '', '#' + id);
+    showPage(id);
+  });
+});
+
+window.addEventListener('hashchange', () => {
+  const id = location.hash.slice(1) || 'home';
+  showPage(id);
+});
+
+// On load, jump to hash
+const initialHash = location.hash.slice(1);
+if (initialHash && document.getElementById(initialHash)) showPage(initialHash);
+
+// ---------- Three.js Scenes ----------
+let activeScene = 'home';
+const scenes = {};
+
+function createScene(canvasSelector, sceneId) {
+  const canvas = document.querySelector(`[data-scene="${sceneId}"]`);
+  if (!canvas) return null;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
+  camera.position.z = 5;
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+
+  return { scene, camera, renderer, canvas, sceneId };
+}
+
+// ---------- Home: Wireframe Torus Knot ----------
+function buildHome() {
+  const ctx = createScene(null, 'home');
+  if (!ctx) return;
+  const { scene, camera } = ctx;
+
+  // Main torus knot
+  const geometry = new THREE.TorusKnotGeometry(1.4, 0.42, 200, 32);
+  const material = new THREE.MeshBasicMaterial({
+    color: 0xc8ff00, wireframe: true, transparent: true, opacity: 0.6
+  });
+  const knot = new THREE.Mesh(geometry, material);
+  scene.add(knot);
+
+  // Outer subtle sphere
+  const sphereGeo = new THREE.SphereGeometry(2.6, 32, 32);
+  const sphereMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.05 });
+  const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+  scene.add(sphere);
+
+  // Particle field
+  const pCount = 500;
+  const positions = new Float32Array(pCount * 3);
+  for (let i = 0; i < pCount; i++) {
+    positions[i*3] = (Math.random() - 0.5) * 20;
+    positions[i*3+1] = (Math.random() - 0.5) * 20;
+    positions[i*3+2] = (Math.random() - 0.5) * 20;
+  }
+  const pGeo = new THREE.BufferGeometry();
+  pGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const pMat = new THREE.PointsMaterial({ color: 0xf5f5f0, size: 0.025, transparent: true, opacity: 0.4 });
+  const points = new THREE.Points(pGeo, pMat);
+  scene.add(points);
+
+  ctx.update = (t, mouse) => {
+    knot.rotation.x = t * 0.0003;
+    knot.rotation.y = t * 0.0005 + mouse.x * 0.5;
+    knot.rotation.z = mouse.y * 0.3;
+    sphere.rotation.y = t * 0.0001;
+    points.rotation.y = t * 0.00005;
+  };
+
+  scenes.home = ctx;
+}
+
+// ---------- About: Wireframe Icosahedron ----------
+function buildAbout() {
+  const ctx = createScene(null, 'about');
+  if (!ctx) return;
+  const { scene, camera } = ctx;
+
+  // Big wireframe icosahedron on the left
+  const geo = new THREE.IcosahedronGeometry(1.8, 1);
+  const mat = new THREE.MeshBasicMaterial({ color: 0xc8ff00, wireframe: true, transparent: true, opacity: 0.5 });
+  const ico = new THREE.Mesh(geo, mat);
+  ico.position.x = -2.2;
+  scene.add(ico);
+
+  // Inner solid form
+  const inner = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(1.2, 0),
+    new THREE.MeshBasicMaterial({ color: 0x141414 })
+  );
+  inner.position.x = -2.2;
+  scene.add(inner);
+
+  // Edges of inner
+  const edgesGeo = new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(1.2, 0));
+  const edgesMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 });
+  const edges = new THREE.LineSegments(edgesGeo, edgesMat);
+  edges.position.x = -2.2;
+  scene.add(edges);
+
+  ctx.update = (t, mouse) => {
+    ico.rotation.x = t * 0.0004 + mouse.y * 0.3;
+    ico.rotation.y = t * 0.0006 + mouse.x * 0.5;
+    inner.rotation.x = ico.rotation.x;
+    inner.rotation.y = ico.rotation.y;
+    edges.rotation.x = ico.rotation.x;
+    edges.rotation.y = ico.rotation.y;
+  };
+
+  scenes.about = ctx;
+}
+
+// ---------- Services: 4 floating shapes ----------
+function buildServices() {
+  const ctx = createScene(null, 'services');
+  if (!ctx) return;
+  const { scene, camera } = ctx;
+  camera.position.z = 7;
+
+  const shapes = [];
+  const geometries = [
+    new THREE.OctahedronGeometry(0.8, 0),
+    new THREE.TorusGeometry(0.7, 0.2, 16, 50),
+    new THREE.ConeGeometry(0.7, 1.2, 6),
+    new THREE.BoxGeometry(1.1, 1.1, 1.1)
+  ];
+  const positions = [
+    [-3.5, 1.2, 0], [-1.2, -1.4, 0], [1.4, 1.4, 0], [3.6, -1.2, 0]
+  ];
+
+  geometries.forEach((g, i) => {
+    const m = new THREE.MeshBasicMaterial({ color: 0xc8ff00, wireframe: true, transparent: true, opacity: 0.55 });
+    const mesh = new THREE.Mesh(g, m);
+    mesh.position.set(...positions[i]);
+    scene.add(mesh);
+    shapes.push(mesh);
+  });
+
+  ctx.update = (t, mouse) => {
+    shapes.forEach((s, i) => {
+      s.rotation.x = t * 0.0004 * (i + 1) * 0.4 + mouse.y * 0.2;
+      s.rotation.y = t * 0.0006 * (i + 1) * 0.3 + mouse.x * 0.3;
+      s.position.y = positions[i][1] + Math.sin(t * 0.001 + i) * 0.15;
+    });
+  };
+
+  scenes.services = ctx;
+}
+
+// ---------- Work: Floating grid of panels ----------
+function buildWork() {
+  const ctx = createScene(null, 'work');
+  if (!ctx) return;
+  const { scene, camera } = ctx;
+  camera.position.z = 8;
+
+  const group = new THREE.Group();
+  const panels = [];
+  for (let i = 0; i < 24; i++) {
+    const x = (i % 6 - 2.5) * 1.4;
+    const y = (Math.floor(i / 6) - 1.5) * 1.4;
+    const geo = new THREE.PlaneGeometry(0.9, 0.6);
+    const mat = new THREE.MeshBasicMaterial({
+      color: i % 5 === 0 ? 0xc8ff00 : 0xffffff,
+      wireframe: true, transparent: true,
+      opacity: i % 5 === 0 ? 0.4 : 0.12
+    });
+    const panel = new THREE.Mesh(geo, mat);
+    panel.position.set(x, y, (Math.random() - 0.5) * 2);
+    panel.rotation.z = (Math.random() - 0.5) * 0.2;
+    group.add(panel);
+    panels.push(panel);
+  }
+  scene.add(group);
+
+  ctx.update = (t, mouse) => {
+    group.rotation.x = mouse.y * 0.3 + Math.sin(t * 0.0003) * 0.1;
+    group.rotation.y = mouse.x * 0.5 + t * 0.0002;
+    panels.forEach((p, i) => {
+      p.position.z += Math.sin(t * 0.001 + i) * 0.001;
+    });
+  };
+
+  scenes.work = ctx;
+}
+
+// ---------- Contact: Particle grid that responds to cursor ----------
+function buildContact() {
+  const ctx = createScene(null, 'contact');
+  if (!ctx) return;
+  const { scene, camera } = ctx;
+  camera.position.z = 6;
+
+  const cols = 40, rows = 25;
+  const positions = new Float32Array(cols * rows * 3);
+  const basePositions = [];
+  let i = 0;
+  for (let x = 0; x < cols; x++) {
+    for (let y = 0; y < rows; y++) {
+      const px = (x - cols / 2) * 0.3;
+      const py = (y - rows / 2) * 0.3;
+      positions[i*3] = px;
+      positions[i*3+1] = py;
+      positions[i*3+2] = 0;
+      basePositions.push([px, py, 0]);
+      i++;
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const mat = new THREE.PointsMaterial({ color: 0xc8ff00, size: 0.04, transparent: true, opacity: 0.8 });
+  const points = new THREE.Points(geo, mat);
+  scene.add(points);
+
+  ctx.update = (t, mouse) => {
+    const arr = geo.attributes.position.array;
+    for (let n = 0; n < basePositions.length; n++) {
+      const [bx, by] = basePositions[n];
+      const wave = Math.sin(t * 0.001 + bx * 0.5 + by * 0.5) * 0.3;
+      const distToMouse = Math.sqrt((bx - mouse.x * 5) ** 2 + (by - mouse.y * 3) ** 2);
+      const repel = Math.max(0, 1.5 - distToMouse) * 0.6;
+      arr[n*3+2] = wave + repel;
+    }
+    geo.attributes.position.needsUpdate = true;
+    points.rotation.x = -0.4 + mouse.y * 0.1;
+  };
+
+  scenes.contact = ctx;
+}
+
+// ---------- Init all scenes ----------
+buildHome();
+buildAbout();
+buildServices();
+buildWork();
+buildContact();
+
+// ---------- Animation loop ----------
+const mouse = { x: 0, y: 0 };
+document.addEventListener('mousemove', (e) => {
+  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -((e.clientY / window.innerHeight) * 2 - 1);
+});
+
+function animate(t) {
+  const ctx = scenes[activeScene];
+  if (ctx && ctx.update) {
+    ctx.update(t, mouse);
+    ctx.renderer.render(ctx.scene, ctx.camera);
+  }
+  requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+
+// ---------- Resize ----------
+window.addEventListener('resize', () => {
+  Object.values(scenes).forEach(ctx => {
+    if (!ctx) return;
+    const { canvas, camera, renderer } = ctx;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h, false);
+  });
+});
+</script>
+</body>
+</html>
